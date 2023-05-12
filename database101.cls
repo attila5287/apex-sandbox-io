@@ -79,7 +79,7 @@ public List<apxio__Student__c> selectStudentsWithoutContactInfo() {
 }
 
 public void createCourseAndClass(String name, String description) {
-
+    // #131
     if (name == null) {
         name = '';
     }
@@ -96,7 +96,7 @@ public void createCourseAndClass(String name, String description) {
     classInsert.Name = name;
 
     //  Make sure to truncate the description to 255 characters before adding it to your apxio__Class__c record. 
-    if(description.size() > 255 ){
+    if(description.length() > 255 ){
         String descTruncated = description;
         descTruncated = description.substring(0, 255);
         classInsert.apxio__Description__c = descTruncated;
@@ -123,5 +123,39 @@ public void insertStudents(List<String> studentNames, List<String> studentEmails
 }
 public Id classFromCourse(String courseName) {
     // #134 - Class from CourseYou should not create a new apxio__Course__c record. The new class should be linked to the course that already exists in the database. In case no course with the given name is found, do not create any class record and return null.
+    List<apxio__Course__c> courseList = [
+        SELECT Id, Name
+        FROM apxio__Course__c
+        WHERE apxio__Course__c.Name= :courseName
+        LIMIT 1
+    ];
+    Boolean noCourseFound = (courseList.size()<1);
+    if (noCourseFound) {
+        return null;
+    } else {
+        // #131 ex create class course return course id
+        List<apxio__Class__c> classInsertList = new List<apxio__Class__c>();
+        for (Integer i = 0; i < courseList.size(); i++) {
+            apxio__Class__c classInsert = new apxio__Class__c();
+            classInsert.name = courseList[i].Name;
+            classInsert.apxio__Course__c = courseList[i].Id;
+            classInsertList.add(classInsert);
+        }
+        insert classInsertList;                
+        // notice LIMIT 1 on the query so there is only one record
+        return classInsertList[0].Id;
+    }
+}
+public void enrollStudents(List<String> emails, String className) {
+    // #135 - Enroll Students
+        
+    
+    
+    
+    
+
+
+
+
 }
 }
