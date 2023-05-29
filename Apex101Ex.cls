@@ -1,4 +1,4 @@
-public with sharing class apex101 {
+public with sharing class Apex101Ex {
   public Boolean isTeenager(Integer age) {
         // #18
         Boolean res;
