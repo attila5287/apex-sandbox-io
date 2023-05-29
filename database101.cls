@@ -146,16 +146,30 @@ public Id classFromCourse(String courseName) {
         return classInsertList[0].Id;
     }
 }
+
 public void enrollStudents(List<String> emails, String className) {
     // #135 - Enroll Students
-        
-    
-    
-    
-    
+    List<apxio__Student__c> stuList = [
+        SELECT Id, apxio__Email__c
+        FROM apxio__Student__c
+        WHERE apxio__Email__c IN:emails
+    ];        
+    // only one element on the list expected due to unique name req't
+    List<apxio__Class__c> clsList = [
+        SELECT Id, Name
+        FROM apxio__Class__c
+        WHERE Name =: className
+    ];
 
+    List<apxio__Class_Enrollment__c> enrList = new List<apxio__Class_Enrollment__c>();
 
-
-
+    // iterate thru students and enroll each of them to the same class by using Id as Foreign Key to tables
+    for (Integer i = 0; i < stuList.size(); i++) {
+        apxio__Class_Enrollment__c enr = new apxio__Class_Enrollment__c();
+        enr.apxio__Offered_Class__c = clsList[0].Id;
+        enr.apxio__Student__c = stuList[i].Id;
+        enrList.add(enr);
+    }
+    insert enrList;
 }
 }
