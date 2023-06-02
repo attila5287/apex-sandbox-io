@@ -78,7 +78,119 @@ public with sharing class ApexLanguageFeatures {
 
     public String getAccountsInJSONFormat(List<Account> accounts){
         // #95 - Serialize sObjects
-        return JSON.serialize(accounts);
+        return (String) JSON.serialize(accounts);
     }
 
+    public List<sObject> getListOfsObject(List<Account> accounts, List<Contact> contacts)
+    { //#96 - Deserialize sObjects
+        List<sObject> res=new List<sObject>();
+        
+        if (accounts!=null) {
+            res.addAll(accounts);
+        } 
+        
+        if (contacts!= null) {
+            res.addAll(contacts);
+        } 
+        return res;
+    }
+    public List<Account> getAccountsFromJSONString(String inputJSON){
+        // #96 - Deserialize sObjects
+        if (inputJSON==null) {
+            return null;
+        } else {
+            return (List<Account>) JSON.deserialize (inputJSON, List<Account>.class);
+        }    
+    }    
+    
+    public Map<String,String> getContextUserInformation(){
+        //#106 - Context User
+        Map<String, String> res =  new Map<String, String> {
+              'EmailId' => UserInfo.getUserEmail(),
+              'ProfileId'=> UserInfo.getProfileId(),
+              'Type' => UserInfo.getUserType(),
+              'UserName' => UserInfo.getUserName()
+        };
+        return res;
+    }    
+    
+    public void validateInsert(List<Opportunity> opportunities){
+        // #105 Trigger Validation
+        /*
+        Implement the method validateInsert, which accepts a newly inserted list of opportunities as an input and adds errors to the opportunity fields as follows: if the opportunity record’s StageName is Closed Won and the Description is null or empty, add an error on the Description field of that record with the error message
+        */
+        String msg = 'Description should not be empty for Closed Won opportunity.';
+        for(Opportunity opp : opportunities) {
+            if(opp.StageName == 'Closed Won') {
+                if (opp.Description == '' || opp.Description == null) {
+                    opp.Description.addError(msg);
+                }   
+            }
+        } 
+    }
+
+    // ------- THE LAST QUESTION STARTS HERE -------
+    public List<Account> getAccounts(List<Account> accounts) {
+        // #98 - Sort List of sObjects
+        if(accounts == null) {
+            return null;
+        } else {
+            List<AccountWrapper> accsToSort = new List<AccountWrapper>();
+        
+            for(Account acc : accounts) {
+                accsToSort.add(new AccountWrapper(acc));
+            }
+        
+            accsToSort.sort();
+        
+            for(Integer i=0; i<accounts.size(); i++) {
+                accounts[i] = accsToSort[i].accy;
+            }
+            
+            return accounts;
+        }
+    }
+    // https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_list_sorting_sobject.htm
+    public class AccountWrapper implements Comparable {
+    
+        public Account accy;
+        
+        // Constructor
+        public AccountWrapper(Account acc) {
+            // Guard against wrapping a null 
+            if(acc == null) {
+                Exception ex = new NullPointerException();
+                ex.setMessage('Account argument cannot be null'); 
+                throw ex;
+            }
+            accy = acc;
+        }
+        
+        // Compare opportunities based on the Account amount.
+        public Integer compareTo(Object compareTo) {
+            // Cast argument to AccountWrapper
+            AccountWrapper compareToAccy = (AccountWrapper)compareTo;
+            
+            // The return value of 0 indicates that both elements are equal.
+            Integer returnValue = 0;
+            if ((accy.AnnualRevenue == null) && (compareToAccy.accy.AnnualRevenue == null)) {
+                // both wrappers have null AnnualRevenues
+                returnValue = 0;
+            } else if ((accy.AnnualRevenue == null) && (compareToAccy.accy.AnnualRevenue != null)){
+                // nulls-first implementation
+                returnValue = 1;
+            } else if ((accy.AnnualRevenue != null) && (compareToAccy.accy.AnnualRevenue == null)){
+                // nulls-first implementation
+                returnValue = -1;
+            } else if (accy.AnnualRevenue > compareToAccy.accy.AnnualRevenue) {
+                // Set return value to a positive value.
+                returnValue = -1;
+            } else if (accy.AnnualRevenue < compareToAccy.accy.AnnualRevenue) {
+                // Set return value to a negative value.
+                returnValue = 1;
+            } 
+            return returnValue;
+        }
+    }
+    // ------- THE LAST QUESTION ENDS HERE ------- 
 }
